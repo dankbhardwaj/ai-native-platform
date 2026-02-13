@@ -5,15 +5,19 @@ from sklearn.ensemble import IsolationForest
 import time
 from kubernetes import client, config
 import threading
+import joblib
+import os
 
 app = FastAPI()
 
 PROM_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
 
+MODEL_PATH = "/model/model.joblib"
+
 MIN_REPLICAS = 1
 MAX_REPLICAS = 5
 COOLDOWN_SECONDS = 60
-RETRAIN_INTERVAL = 300  # 5 minutes
+RETRAIN_INTERVAL = 300
 
 model = IsolationForest(contamination=0.1)
 last_scale_time = 0
@@ -49,6 +53,19 @@ def fetch_metrics():
     return values
 
 
+def save_model():
+    joblib.dump(model, MODEL_PATH)
+    print("Model saved to disk")
+
+
+def load_model():
+    global model_ready, model
+    if os.path.exists(MODEL_PATH):
+        model = joblib.load(MODEL_PATH)
+        model_ready = True
+        print("Model loaded from disk")
+
+
 def retrain_loop():
     global model, model_ready
 
@@ -59,7 +76,8 @@ def retrain_loop():
             X = np.array(values).reshape(-1, 1)
             model.fit(X)
             model_ready = True
-            print("Model retrained successfully")
+            save_model()
+            print("Model retrained and saved")
 
         time.sleep(RETRAIN_INTERVAL)
 
@@ -87,7 +105,8 @@ def scale_api(new_replicas):
 
 
 @app.on_event("startup")
-def start_retraining():
+def startup_tasks():
+    load_model()
     thread = threading.Thread(target=retrain_loop)
     thread.daemon = True
     thread.start()

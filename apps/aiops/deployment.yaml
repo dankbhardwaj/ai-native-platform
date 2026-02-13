@@ -16,6 +16,13 @@ spec:
       serviceAccountName: aiops-sa
       containers:
         - name: aiops
-          image: dankbhardwaj/aiops:v8
+          image: dankbhardwaj/aiops:v9
           ports:
             - containerPort: 8000
+          volumeMounts:
+            - name: model-storage
+              mountPath: /model
+      volumes:
+        - name: model-storage
+          persistentVolumeClaim:
+            claimName: aiops-model-pvc
