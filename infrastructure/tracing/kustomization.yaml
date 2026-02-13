@@ -4,3 +4,6 @@ resources:
   - namespace.yaml
   - helmrepo.yaml
   - tempo.yaml
+  - otel-config.yaml
+  - otel-collector.yaml
+  - otel-service.yaml
