@@ -4,3 +4,4 @@ resources:
 - flux-system
 - ../../apps/nginx
 - ../../infrastructure/monitoring
+- ../../apps/api
