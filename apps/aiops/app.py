@@ -1,30 +1,64 @@
 from fastapi import FastAPI
 import requests
-import statistics
+import numpy as np
+from sklearn.ensemble import IsolationForest
 
 app = FastAPI()
 
 PROM_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
 
-@app.get("/anomaly")
-def detect_anomaly():
+model = IsolationForest(contamination=0.1)
+trained = False
+
+
+def fetch_metrics():
     query = 'rate(app_requests_total[1m])'
-    response = requests.get(f"{PROM_URL}/api/v1/query", params={"query": query})
+    response = requests.get(f"{PROM_URL}/api/v1/query_range", params={
+        "query": query,
+        "start": "now-10m",
+        "end": "now",
+        "step": "15s"
+    })
     data = response.json()
 
     values = []
     for result in data.get("data", {}).get("result", []):
-        values.append(float(result["value"][1]))
+        for point in result.get("values", []):
+            values.append(float(point[1]))
 
+    return values
+
+
+@app.get("/train")
+def train_model():
+    global trained
+    values = fetch_metrics()
+
+    if len(values) < 10:
+        return {"status": "not enough data"}
+
+    X = np.array(values).reshape(-1, 1)
+    model.fit(X)
+    trained = True
+    return {"status": "model trained", "samples": len(values)}
+
+
+@app.get("/detect")
+def detect():
+    global trained
+    if not trained:
+        return {"status": "model not trained"}
+
+    values = fetch_metrics()
     if not values:
         return {"status": "no data"}
 
-    avg = statistics.mean(values)
-    stdev = statistics.stdev(values) if len(values) > 1 else 0
+    X = np.array(values).reshape(-1, 1)
+    predictions = model.predict(X)
 
-    current = values[-1]
+    anomalies = np.sum(predictions == -1)
 
-    if stdev > 0 and abs(current - avg) > 2 * stdev:
-        return {"anomaly": True, "value": current}
-    else:
-        return {"anomaly": False, "value": current}
+    return {
+        "anomalies_detected": int(anomalies),
+        "total_points": len(values)
+    }
