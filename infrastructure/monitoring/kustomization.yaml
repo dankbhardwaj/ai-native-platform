@@ -6,4 +6,4 @@ resources:
   - helmrepo.yaml
   - prometheus.yaml
   - api-servicemonitor.yaml
-
+  - llm-servicemonitor.yaml
