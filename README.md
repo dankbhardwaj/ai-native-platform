@@ -57,83 +57,40 @@ All deployments are Git-driven and automatically reconciled.
 
 ## 📦 Repository Structure
 
-ai-native-platform/
-│
-├── README.md
-│
-├── docs/ # Technical documentation
-│ ├── architecture.md # System architecture & data flow
-│ ├── sre-slos.md # Service Level Objectives
-│ ├── incident-playbooks.md # Operational runbooks
-│ └── aiops-design.md # AI automation design
-│
-├── infra/ # Infrastructure provisioning (Day-0)
-│ ├── terraform/
-│ │ ├── aws/ # Cloud provider configuration
-│ │ ├── networking/ # VPC, subnets, routing
-│ │ ├── eks/ # Kubernetes provisioning
-│ │ └── observability-stack/ # Monitoring infrastructure
-│ └── kind/ # Local development cluster
-│
-├── gitops/ # GitOps control plane (Platform core)
-│ ├── clusters/
-│ │ ├── dev/
-│ │ ├── staging/
-│ │ └── prod/
-│ ├── flux/
-│ │ ├── system/
-│ │ └── sources/
-│ └── kustomize/
-│
-├── platform/ # Internal Developer Platform (IDP)
-│ ├── templates/
-│ ├── base-services/
-│ └── self-service/
-│
-├── apps/ # Application workloads
-│ ├── backend/
-│ │ ├── fastapi-app/
-│ │ └── Dockerfile
-│ ├── frontend/
-│ └── manifests/
-│
-├── observability/ # Monitoring & tracing stack
-│ ├── opentelemetry/
-│ ├── prometheus/
-│ ├── grafana/
-│ └── elastic/
-│
-├── sre/ # Reliability engineering
-│ ├── slos/
-│ ├── error-budgets/
-│ ├── autoscaling/
-│ └── chaos/
-│
-├── aiops/ # Intelligent operations
-│ ├── data-collector/
-│ ├── anomaly-detection/
-│ ├── rca-engine/
-│ └── remediation-engine/
-│
-├── mlops/ # ML lifecycle automation
-│ ├── training/
-│ ├── pipelines/
-│ ├── model-registry/
-│ └── serving/
-│
-├── llmops/ # Generative AI operations
-│ ├── rag/
-│ ├── prompt-versioning/
-│ ├── vector-db/
-│ └── llm-serving/
-│
-├── ci/ # CI/CD pipelines
-│ ├── github-actions/
-│ └── security-scans/
-│
-└── scripts/
-├── bootstrap.sh
-└── teardown.sh
+┌─────────────────────────────────────────────────────────────┐
+│                   AI-NATIVE PLATFORM                        │
+└─────────────────────────────────────────────────────────────┘
+
+┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+│   🏗 INFRA   │─────▶│  🔄 GITOPS   │─────▶│  🧩 PLATFORM │
+│  Terraform   │      │ Flux/Kustomize│      │     IDP      │
+│   AWS/EKS    │      │  Dev/Staging  │      │  Templates   │
+└──────────────┘      │     /Prod     │      └──────────────┘
+                      └──────────────┘              │
+                                                    ▼
+                      ┌──────────────────────────────────────┐
+                      │         🚀 APPLICATIONS              │
+                      │    Backend / Frontend / Services     │
+                      └──────────────────────────────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+          ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+          │ 👀 OBSERVE  │   │  🛡 SRE     │   │  🤖 AIOPS   │
+          │ Prometheus  │   │   SLOs      │   │  Anomaly    │
+          │  Grafana    │   │ Autoscaling │   │  Detection  │
+          │   OTEL      │   │   Chaos     │   │    RCA      │
+          └─────────────┘   └─────────────┘   └─────────────┘
+                                      │
+                    ┌─────────────────┼─────────────────┐
+                    ▼                 ▼                 ▼
+          ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
+          │  🧠 MLOPS   │   │ 🔥 LLMOPS   │   │  🔐 CI/CD   │
+          │  Training   │   │     RAG     │   │   GitHub    │
+          │  Pipelines  │   │   Prompts   │   │   Actions   │
+          │   Serving   │   │  Vector DB  │   │  Security   │
+          └─────────────┘   └─────────────┘   └─────────────┘
+
 
 ---
 
