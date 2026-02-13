@@ -11,13 +11,14 @@ spec:
   template:
     metadata:
       labels:
-        app: otel-collector    
-        version:"v2"
+        app: otel-collector
+        rollout: "v1"
     spec:
       containers:
         - name: otel-collector
-          image: otel/opentelemetry-collector-contrib:latest
-          args: ["--config=/conf/otel-collector-config.yaml"]
+          image: otel/opentelemetry-collector-contrib:0.145.0
+          args:
+            - "--config=/conf/otel-collector-config.yaml"
           ports:
             - containerPort: 4317
             - containerPort: 4318
