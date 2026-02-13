@@ -1,8 +1,10 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
+
 resources:
 - flux-system
 - ../../apps/nginx
-- ../../infrastructure/monitoring
 - ../../apps/api
+- ../../infrastructure/monitoring
 - ../../infrastructure/tracing
+- ../../apps/aiops
