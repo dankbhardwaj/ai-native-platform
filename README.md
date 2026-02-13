@@ -26,85 +26,85 @@ All deployments are Git-driven and automatically reconciled.
 
 # 📂 Repository Structure
 
+## 📦 Repository Structure
+
 ai-native-platform/
 │
-├── 📄 README.md
+├── README.md
 │
-├── 📚 docs/                         # Technical Documentation
-│   ├── architecture.md              # System design & data flow
-│   ├── sre-slos.md                  # SLOs & reliability policy
-│   ├── incident-playbooks.md        # Operational runbooks
-│   └── aiops-design.md              # AI automation design
+├── docs/ # Technical documentation
+│ ├── architecture.md # System architecture & data flow
+│ ├── sre-slos.md # Service Level Objectives
+│ ├── incident-playbooks.md # Operational runbooks
+│ └── aiops-design.md # AI automation design
 │
-├── 🏗 infra/                        # Infrastructure (Day-0 Provisioning)
-│   ├── terraform/
-│   │   ├── aws/                     # Cloud provider configs
-│   │   ├── networking/              # VPC, subnets, routing
-│   │   ├── eks/                     # Kubernetes provisioning
-│   │   └── observability-stack/     # Monitoring infra
-│   └── kind/                        # Local development cluster
+├── infra/ # Infrastructure provisioning (Day-0)
+│ ├── terraform/
+│ │ ├── aws/ # Cloud provider configuration
+│ │ ├── networking/ # VPC, subnets, routing
+│ │ ├── eks/ # Kubernetes provisioning
+│ │ └── observability-stack/ # Monitoring infrastructure
+│ └── kind/ # Local development cluster
 │
-├── 🔄 gitops/                       # GitOps Control Plane (Platform Core)
-│   ├── clusters/
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
-│   ├── flux/
-│   │   ├── system/
-│   │   └── sources/
-│   └── kustomize/
+├── gitops/ # GitOps control plane (Platform core)
+│ ├── clusters/
+│ │ ├── dev/
+│ │ ├── staging/
+│ │ └── prod/
+│ ├── flux/
+│ │ ├── system/
+│ │ └── sources/
+│ └── kustomize/
 │
-├── 🧩 platform/                     # Internal Developer Platform (IDP)
-│   ├── templates/
-│   ├── base-services/
-│   └── self-service/
+├── platform/ # Internal Developer Platform (IDP)
+│ ├── templates/
+│ ├── base-services/
+│ └── self-service/
 │
-├── 🚀 apps/                         # Application Workloads
-│   ├── backend/
-│   │   ├── fastapi-app/
-│   │   └── Dockerfile
-│   ├── frontend/
-│   └── manifests/
+├── apps/ # Application workloads
+│ ├── backend/
+│ │ ├── fastapi-app/
+│ │ └── Dockerfile
+│ ├── frontend/
+│ └── manifests/
 │
-├── 👀 observability/                # Monitoring & Tracing
-│   ├── opentelemetry/
-│   ├── prometheus/
-│   ├── grafana/
-│   └── elastic/
+├── observability/ # Monitoring & tracing stack
+│ ├── opentelemetry/
+│ ├── prometheus/
+│ ├── grafana/
+│ └── elastic/
 │
-├── 🛡 sre/                          # Reliability Engineering
-│   ├── slos/
-│   ├── error-budgets/
-│   ├── autoscaling/
-│   └── chaos/
+├── sre/ # Reliability engineering
+│ ├── slos/
+│ ├── error-budgets/
+│ ├── autoscaling/
+│ └── chaos/
 │
-├── 🤖 aiops/                        # Intelligent Operations
-│   ├── data-collector/
-│   ├── anomaly-detection/
-│   ├── rca-engine/
-│   └── remediation-engine/
+├── aiops/ # Intelligent operations
+│ ├── data-collector/
+│ ├── anomaly-detection/
+│ ├── rca-engine/
+│ └── remediation-engine/
 │
-├── 🧠 mlops/                        # ML Lifecycle Automation
-│   ├── training/
-│   ├── pipelines/
-│   ├── model-registry/
-│   └── serving/
+├── mlops/ # ML lifecycle automation
+│ ├── training/
+│ ├── pipelines/
+│ ├── model-registry/
+│ └── serving/
 │
-├── 🔥 llmops/                       # Generative AI Operations
-│   ├── rag/
-│   ├── prompt-versioning/
-│   ├── vector-db/
-│   └── llm-serving/
+├── llmops/ # Generative AI operations
+│ ├── rag/
+│ ├── prompt-versioning/
+│ ├── vector-db/
+│ └── llm-serving/
 │
-├── 🔐 ci/                           # CI/CD Pipelines
-│   ├── github-actions/
-│   └── security-scans/
+├── ci/ # CI/CD pipelines
+│ ├── github-actions/
+│ └── security-scans/
 │
-└── 🧰 scripts/
-    ├── bootstrap.sh
-    └── teardown.sh
-
-
+└── scripts/
+├── bootstrap.sh
+└── teardown.sh
 
 ---
 
