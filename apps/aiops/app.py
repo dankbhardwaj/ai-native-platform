@@ -12,6 +12,9 @@ PROM_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local
 model = IsolationForest(contamination=0.1)
 trained = False
 
+MIN_REPLICAS = 1
+MAX_REPLICAS = 5
+
 
 def fetch_metrics():
     end = int(time.time())
@@ -40,6 +43,24 @@ def fetch_metrics():
                 continue
 
     return values
+
+
+def scale_api(replicas):
+    config.load_incluster_config()
+    apps_v1 = client.AppsV1Api()
+
+    scale = apps_v1.read_namespaced_deployment_scale(
+        name="api",
+        namespace="default"
+    )
+
+    scale.spec.replicas = replicas
+
+    apps_v1.patch_namespaced_deployment_scale(
+        name="api",
+        namespace="default",
+        body=scale
+    )
 
 
 @app.get("/train")
@@ -75,32 +96,31 @@ def detect():
 
     X = np.array(values).reshape(-1, 1)
     predictions = model.predict(X)
-
     anomalies = np.sum(predictions == -1)
 
-    # 🔥 AUTO-SCALING LOGIC
-    if anomalies > 0:
-        try:
-            config.load_incluster_config()
-            apps_v1 = client.AppsV1Api()
+    try:
+        config.load_incluster_config()
+        apps_v1 = client.AppsV1Api()
 
-            scale = apps_v1.read_namespaced_deployment_scale(
-                name="api",
-                namespace="default"
-            )
+        scale = apps_v1.read_namespaced_deployment_scale(
+            name="api",
+            namespace="default"
+        )
 
-            current_replicas = scale.spec.replicas
+        current_replicas = scale.spec.replicas
 
-            if current_replicas < 5:
-                scale.spec.replicas = current_replicas + 1
-                apps_v1.patch_namespaced_deployment_scale(
-                    name="api",
-                    namespace="default",
-                    body=scale
-                )
+        # 🔥 Scale UP on anomaly
+        if anomalies > 0 and current_replicas < MAX_REPLICAS:
+            new_replicas = current_replicas + 1
+            scale_api(new_replicas)
 
-        except Exception as e:
-            return {"error_scaling": str(e)}
+        # 🔥 Scale DOWN if system stable
+        if anomalies == 0 and current_replicas > MIN_REPLICAS:
+            new_replicas = current_replicas - 1
+            scale_api(new_replicas)
+
+    except Exception as e:
+        return {"error_scaling": str(e)}
 
     return {
         "anomalies_detected": int(anomalies),
