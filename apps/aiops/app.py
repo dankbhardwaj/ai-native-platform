@@ -3,6 +3,7 @@ import requests
 import numpy as np
 from sklearn.ensemble import IsolationForest
 import time
+from kubernetes import client, config
 
 app = FastAPI()
 
@@ -13,9 +14,8 @@ trained = False
 
 
 def fetch_metrics():
-    # Get last 5 minutes of request rate
     end = int(time.time())
-    start = end - 300  # 5 minutes ago
+    start = end - 300  # last 5 minutes
 
     query = 'rate(app_requests_total[30s])'
 
@@ -30,7 +30,6 @@ def fetch_metrics():
     )
 
     data = response.json()
-
     values = []
 
     for result in data.get("data", {}).get("result", []):
@@ -46,6 +45,7 @@ def fetch_metrics():
 @app.get("/train")
 def train_model():
     global trained
+
     values = fetch_metrics()
 
     if len(values) < 10:
@@ -77,6 +77,30 @@ def detect():
     predictions = model.predict(X)
 
     anomalies = np.sum(predictions == -1)
+
+    # 🔥 AUTO-SCALING LOGIC
+    if anomalies > 0:
+        try:
+            config.load_incluster_config()
+            apps_v1 = client.AppsV1Api()
+
+            scale = apps_v1.read_namespaced_deployment_scale(
+                name="api",
+                namespace="default"
+            )
+
+            current_replicas = scale.spec.replicas
+
+            if current_replicas < 5:
+                scale.spec.replicas = current_replicas + 1
+                apps_v1.patch_namespaced_deployment_scale(
+                    name="api",
+                    namespace="default",
+                    body=scale
+                )
+
+        except Exception as e:
+            return {"error_scaling": str(e)}
 
     return {
         "anomalies_detected": int(anomalies),

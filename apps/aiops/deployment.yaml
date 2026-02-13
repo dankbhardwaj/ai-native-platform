@@ -13,8 +13,9 @@ spec:
       labels:
         app: aiops
     spec:
+      serviceAccountName: aiops-sa
       containers:
         - name: aiops
-          image: dankbhardwaj/aiops:v4
+          image: dankbhardwaj/aiops:v5
           ports:
             - containerPort: 8000
