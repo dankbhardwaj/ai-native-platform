@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import requests
 import numpy as np
 from sklearn.ensemble import IsolationForest
+import time
 
 app = FastAPI()
 
@@ -12,17 +13,32 @@ trained = False
 
 
 def fetch_metrics():
-    query = 'app_requests_total'
+    # Get last 5 minutes of request rate
+    end = int(time.time())
+    start = end - 300  # 5 minutes ago
+
+    query = 'rate(app_requests_total[30s])'
+
     response = requests.get(
-        f"{PROM_URL}/api/v1/query",
-        params={"query": query}
+        f"{PROM_URL}/api/v1/query_range",
+        params={
+            "query": query,
+            "start": start,
+            "end": end,
+            "step": 15
+        }
     )
 
     data = response.json()
 
     values = []
+
     for result in data.get("data", {}).get("result", []):
-        values.append(float(result["value"][1]))
+        for point in result.get("values", []):
+            try:
+                values.append(float(point[1]))
+            except:
+                continue
 
     return values
 
@@ -32,18 +48,23 @@ def train_model():
     global trained
     values = fetch_metrics()
 
-    if len(values) < 2:
+    if len(values) < 10:
         return {"status": "not enough data", "samples": len(values)}
 
     X = np.array(values).reshape(-1, 1)
     model.fit(X)
     trained = True
-    return {"status": "model trained", "samples": len(values)}
+
+    return {
+        "status": "model trained",
+        "samples": len(values)
+    }
 
 
 @app.get("/detect")
 def detect():
     global trained
+
     if not trained:
         return {"status": "model not trained"}
 

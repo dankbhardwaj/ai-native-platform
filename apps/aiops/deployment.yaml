@@ -15,6 +15,6 @@ spec:
     spec:
       containers:
         - name: aiops
-          image: dankbhardwaj/aiops:v3
+          image: dankbhardwaj/aiops:v4
           ports:
             - containerPort: 8000
