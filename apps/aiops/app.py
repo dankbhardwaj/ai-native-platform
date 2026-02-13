@@ -14,6 +14,9 @@ trained = False
 
 MIN_REPLICAS = 1
 MAX_REPLICAS = 5
+COOLDOWN_SECONDS = 60
+
+last_scale_time = 0
 
 
 def fetch_metrics():
@@ -45,7 +48,9 @@ def fetch_metrics():
     return values
 
 
-def scale_api(replicas):
+def scale_api(new_replicas):
+    global last_scale_time
+
     config.load_incluster_config()
     apps_v1 = client.AppsV1Api()
 
@@ -54,13 +59,15 @@ def scale_api(replicas):
         namespace="default"
     )
 
-    scale.spec.replicas = replicas
+    scale.spec.replicas = new_replicas
 
     apps_v1.patch_namespaced_deployment_scale(
         name="api",
         namespace="default",
         body=scale
     )
+
+    last_scale_time = int(time.time())
 
 
 @app.get("/train")
@@ -85,6 +92,7 @@ def train_model():
 @app.get("/detect")
 def detect():
     global trained
+    global last_scale_time
 
     if not trained:
         return {"status": "model not trained"}
@@ -98,6 +106,8 @@ def detect():
     predictions = model.predict(X)
     anomalies = np.sum(predictions == -1)
 
+    now = int(time.time())
+
     try:
         config.load_incluster_config()
         apps_v1 = client.AppsV1Api()
@@ -109,20 +119,22 @@ def detect():
 
         current_replicas = scale.spec.replicas
 
-        # 🔥 Scale UP on anomaly
-        if anomalies > 0 and current_replicas < MAX_REPLICAS:
-            new_replicas = current_replicas + 1
-            scale_api(new_replicas)
+        # Cooldown protection
+        if now - last_scale_time >= COOLDOWN_SECONDS:
 
-        # 🔥 Scale DOWN if system stable
-        if anomalies == 0 and current_replicas > MIN_REPLICAS:
-            new_replicas = current_replicas - 1
-            scale_api(new_replicas)
+            # Scale UP
+            if anomalies > 0 and current_replicas < MAX_REPLICAS:
+                scale_api(current_replicas + 1)
+
+            # Scale DOWN
+            elif anomalies == 0 and current_replicas > MIN_REPLICAS:
+                scale_api(current_replicas - 1)
 
     except Exception as e:
         return {"error_scaling": str(e)}
 
     return {
         "anomalies_detected": int(anomalies),
-        "total_points": len(values)
+        "total_points": len(values),
+        "current_replicas": current_replicas
     }

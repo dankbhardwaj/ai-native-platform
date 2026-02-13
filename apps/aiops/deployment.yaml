@@ -16,6 +16,6 @@ spec:
       serviceAccountName: aiops-sa
       containers:
         - name: aiops
-          image: dankbhardwaj/aiops:v6
+          image: dankbhardwaj/aiops:v7
           ports:
             - containerPort: 8000
