@@ -12,19 +12,17 @@ trained = False
 
 
 def fetch_metrics():
-    query = 'rate(app_requests_total[1m])'
-    response = requests.get(f"{PROM_URL}/api/v1/query_range", params={
-        "query": query,
-        "start": "now-10m",
-        "end": "now",
-        "step": "15s"
-    })
+    query = 'app_requests_total'
+    response = requests.get(
+        f"{PROM_URL}/api/v1/query",
+        params={"query": query}
+    )
+
     data = response.json()
 
     values = []
     for result in data.get("data", {}).get("result", []):
-        for point in result.get("values", []):
-            values.append(float(point[1]))
+        values.append(float(result["value"][1]))
 
     return values
 
@@ -34,8 +32,8 @@ def train_model():
     global trained
     values = fetch_metrics()
 
-    if len(values) < 10:
-        return {"status": "not enough data"}
+    if len(values) < 2:
+        return {"status": "not enough data", "samples": len(values)}
 
     X = np.array(values).reshape(-1, 1)
     model.fit(X)
@@ -50,6 +48,7 @@ def detect():
         return {"status": "model not trained"}
 
     values = fetch_metrics()
+
     if not values:
         return {"status": "no data"}
 
