@@ -5,3 +5,4 @@ resources:
 - ../../apps/nginx
 - ../../infrastructure/monitoring
 - ../../apps/api
+- ../../infrastructure/tracing
