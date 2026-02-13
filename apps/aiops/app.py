@@ -4,24 +4,25 @@ import numpy as np
 from sklearn.ensemble import IsolationForest
 import time
 from kubernetes import client, config
+import threading
 
 app = FastAPI()
 
 PROM_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
 
-model = IsolationForest(contamination=0.1)
-trained = False
-
 MIN_REPLICAS = 1
 MAX_REPLICAS = 5
 COOLDOWN_SECONDS = 60
+RETRAIN_INTERVAL = 300  # 5 minutes
 
+model = IsolationForest(contamination=0.1)
 last_scale_time = 0
+model_ready = False
 
 
 def fetch_metrics():
     end = int(time.time())
-    start = end - 300  # last 5 minutes
+    start = end - 300
 
     query = 'rate(app_requests_total[30s])'
 
@@ -48,6 +49,21 @@ def fetch_metrics():
     return values
 
 
+def retrain_loop():
+    global model, model_ready
+
+    while True:
+        values = fetch_metrics()
+
+        if len(values) >= 10:
+            X = np.array(values).reshape(-1, 1)
+            model.fit(X)
+            model_ready = True
+            print("Model retrained successfully")
+
+        time.sleep(RETRAIN_INTERVAL)
+
+
 def scale_api(new_replicas):
     global last_scale_time
 
@@ -70,32 +86,19 @@ def scale_api(new_replicas):
     last_scale_time = int(time.time())
 
 
-@app.get("/train")
-def train_model():
-    global trained
-
-    values = fetch_metrics()
-
-    if len(values) < 10:
-        return {"status": "not enough data", "samples": len(values)}
-
-    X = np.array(values).reshape(-1, 1)
-    model.fit(X)
-    trained = True
-
-    return {
-        "status": "model trained",
-        "samples": len(values)
-    }
+@app.on_event("startup")
+def start_retraining():
+    thread = threading.Thread(target=retrain_loop)
+    thread.daemon = True
+    thread.start()
 
 
 @app.get("/detect")
 def detect():
-    global trained
     global last_scale_time
 
-    if not trained:
-        return {"status": "model not trained"}
+    if not model_ready:
+        return {"status": "model warming up"}
 
     values = fetch_metrics()
 
@@ -119,14 +122,11 @@ def detect():
 
         current_replicas = scale.spec.replicas
 
-        # Cooldown protection
         if now - last_scale_time >= COOLDOWN_SECONDS:
 
-            # Scale UP
             if anomalies > 0 and current_replicas < MAX_REPLICAS:
                 scale_api(current_replicas + 1)
 
-            # Scale DOWN
             elif anomalies == 0 and current_replicas > MIN_REPLICAS:
                 scale_api(current_replicas - 1)
 
