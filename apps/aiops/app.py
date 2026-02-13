@@ -2,6 +2,7 @@ from fastapi import FastAPI
 import requests
 import numpy as np
 from sklearn.ensemble import IsolationForest
+from sklearn.metrics import precision_score
 import time
 from kubernetes import client, config
 import threading
@@ -11,7 +12,6 @@ import os
 app = FastAPI()
 
 PROM_URL = "http://kube-prometheus-stack-prometheus.monitoring.svc.cluster.local:9090"
-
 MODEL_PATH = "/model/model.joblib"
 
 MIN_REPLICAS = 1
@@ -55,7 +55,6 @@ def fetch_metrics():
 
 def save_model():
     joblib.dump(model, MODEL_PATH)
-    print("Model saved to disk")
 
 
 def load_model():
@@ -63,7 +62,6 @@ def load_model():
     if os.path.exists(MODEL_PATH):
         model = joblib.load(MODEL_PATH)
         model_ready = True
-        print("Model loaded from disk")
 
 
 def retrain_loop():
@@ -77,7 +75,6 @@ def retrain_loop():
             model.fit(X)
             model_ready = True
             save_model()
-            print("Model retrained and saved")
 
         time.sleep(RETRAIN_INTERVAL)
 
@@ -110,6 +107,34 @@ def startup_tasks():
     thread = threading.Thread(target=retrain_loop)
     thread.daemon = True
     thread.start()
+
+
+@app.get("/validate")
+def validate_model():
+    if not model_ready:
+        return {"status": "model not ready"}
+
+    values = fetch_metrics()
+
+    if len(values) < 10:
+        return {"status": "not enough data"}
+
+    X = np.array(values).reshape(-1, 1)
+    predictions = model.predict(X)
+
+    # Simulated ground truth (last 2 values treated as anomaly)
+    ground_truth = np.ones(len(values))
+    ground_truth[-2:] = -1
+
+    precision = precision_score(
+        ground_truth == -1,
+        predictions == -1
+    )
+
+    return {
+        "precision_score": float(precision),
+        "model_approved": precision >= 0.5
+    }
 
 
 @app.get("/detect")

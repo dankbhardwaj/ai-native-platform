@@ -8,3 +8,4 @@ resources:
 - ../../infrastructure/monitoring
 - ../../infrastructure/tracing
 - ../../apps/aiops
+- ../../apps/llm-service

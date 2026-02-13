@@ -1,0 +1,21 @@
+name: Model Validation Pipeline
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  validate-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build Docker Image
+        run: docker build -t aiops-test apps/aiops
+
+      - name: Run Validation Check
+        run: |
+          docker run -d -p 8000:8000 aiops-test
+          sleep 10
+          curl http://localhost:8000/validate
