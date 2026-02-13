@@ -12,6 +12,8 @@ spec:
     metadata:
       labels:
         app: otel-collector
+      annotations:
+      configmap.revision: "v2"
     spec:
       containers:
         - name: otel-collector
