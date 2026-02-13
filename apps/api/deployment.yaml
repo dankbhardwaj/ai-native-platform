@@ -3,6 +3,8 @@ kind: Deployment
 metadata:
   name: api
   namespace: default
+  labels:
+    app: api
 spec:
   replicas: 1
   selector:
@@ -19,6 +21,14 @@ spec:
     spec:
       containers:
         - name: api
-          image: yourdockerhub/api:latest
+          image: dankbhardwaj/api:v2
+          imagePullPolicy: Always
           ports:
             - containerPort: 8000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "256Mi"
