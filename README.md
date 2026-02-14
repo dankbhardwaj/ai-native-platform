@@ -57,39 +57,8 @@ All deployments are Git-driven and automatically reconciled.
 
 ## 📦 Repository Structure
 
-┌─────────────────────────────────────────────────────────────┐
-│                   AI-NATIVE PLATFORM                        │
-└─────────────────────────────────────────────────────────────┘
+<img width="1536" height="1024" alt="ChatGPT Image Feb 14, 2026, 12_57_44 PM" src="https://github.com/user-attachments/assets/6c001689-36fa-4b65-98ac-3c123a45c826" />
 
-┌──────────────┐      ┌──────────────┐      ┌──────────────┐
-│   🏗 INFRA   │─────▶│  🔄 GITOPS   │─────▶│  🧩 PLATFORM │
-│  Terraform   │      │ Flux/Kustomize│      │     IDP      │
-│   AWS/EKS    │      │  Dev/Staging  │      │  Templates   │
-└──────────────┘      │     /Prod     │      └──────────────┘
-                      └──────────────┘              │
-                                                    ▼
-                      ┌──────────────────────────────────────┐
-                      │         🚀 APPLICATIONS              │
-                      │    Backend / Frontend / Services     │
-                      └──────────────────────────────────────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    ▼                 ▼                 ▼
-          ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-          │ 👀 OBSERVE  │   │  🛡 SRE     │   │  🤖 AIOPS   │
-          │ Prometheus  │   │   SLOs      │   │  Anomaly    │
-          │  Grafana    │   │ Autoscaling │   │  Detection  │
-          │   OTEL      │   │   Chaos     │   │    RCA      │
-          └─────────────┘   └─────────────┘   └─────────────┘
-                                      │
-                    ┌─────────────────┼─────────────────┐
-                    ▼                 ▼                 ▼
-          ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-          │  🧠 MLOPS   │   │ 🔥 LLMOPS   │   │  🔐 CI/CD   │
-          │  Training   │   │     RAG     │   │   GitHub    │
-          │  Pipelines  │   │   Prompts   │   │   Actions   │
-          │   Serving   │   │  Vector DB  │   │  Security   │
-          └─────────────┘   └─────────────┘   └─────────────┘
 
 
 ---
